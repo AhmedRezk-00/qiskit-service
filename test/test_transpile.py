@@ -22,6 +22,7 @@ import os
 from app.config import basedir
 from app import app, db
 import qiskit
+from qiskit import qasm2
 import base64
 from qiskit.circuit.random import random_circuit
 
@@ -52,8 +53,8 @@ class TranspileTestCase(unittest.TestCase):
     def test_transpile_hadamard_simulator_url(self):
         # prepare the request
         request = {'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/hadamard.py",
-            'impl-language': 'Qiskit', 'qpu-name': "ibmq_qasm_simulator", 'input-params': {},
-            'token': os.environ["QISKIT_TOKEN"]}
+                   'impl-language': 'Qiskit', 'qpu-name': "ibmq_qasm_simulator", 'input-params': {},
+                   'token': os.environ["QISKIT_TOKEN"]}
 
         # send the request
         response = self.client.post('/qiskit-service/api/v1.0/transpile', json=request)
@@ -83,7 +84,7 @@ class TranspileTestCase(unittest.TestCase):
         with open(file_path, 'rb') as f:
             impl_data = base64.b64encode(f.read()).decode()
         request = {'impl-data': impl_data, 'impl-language': 'Qiskit', 'qpu-name': "ibmq_qasm_simulator",
-            'input-params': {}, 'token': os.environ["QISKIT_TOKEN"]}
+                   'input-params': {}, 'token': os.environ["QISKIT_TOKEN"]}
 
         # send the request
         response = self.client.post('/qiskit-service/api/v1.0/transpile', json=request)
@@ -113,7 +114,7 @@ class TranspileTestCase(unittest.TestCase):
         with open(file_path, 'rb') as f:
             impl_data = base64.b64encode(f.read()).decode()
         request = {'impl-data': impl_data, 'impl-language': 'openqasm', 'qpu-name': "ibmq_qasm_simulator",
-            'input-params': {}, 'token': os.environ.get("QISKIT_TOKEN", "")}
+                   'input-params': {}, 'token': os.environ.get("QISKIT_TOKEN", "")}
 
         # send the request
         response = self.client.post('/qiskit-service/api/v1.0/transpile', json=request)
@@ -140,8 +141,8 @@ class TranspileTestCase(unittest.TestCase):
     def test_transpile_shor_sim_url_qasm(self):
         # prepare the request
         request = {'impl-url': 'https://quantum-circuit.com/api/get/circuit/KzG7MxH6hpBpM9pCt?format=qasm',
-            'impl-language': 'OpenQASM', 'qpu-name': "ibmq_qasm_simulator", 'input-params': {},
-            'token': os.environ["QISKIT_TOKEN"]}
+                   'impl-language': 'OpenQASM', 'qpu-name': "ibmq_qasm_simulator", 'input-params': {},
+                   'token': os.environ["QISKIT_TOKEN"]}
 
         # send the request
         response = self.client.post('/qiskit-service/api/v1.0/transpile', json=request)
@@ -207,7 +208,7 @@ class TranspileTestCase(unittest.TestCase):
         with open(file_path, 'rb') as f:
             impl_data = base64.b64encode(f.read()).decode()
         request = {'impl-data': impl_data, 'impl-language': 'OpenQASM', 'qpu-name': "ibmq_qasm_simulator",
-            'input-params': {}, 'token': os.environ["QISKIT_TOKEN"]}
+                   'input-params': {}, 'token': os.environ["QISKIT_TOKEN"]}
 
         # send the request
         response = self.client.post('/qiskit-service/api/v1.0/transpile', json=request)
@@ -330,7 +331,7 @@ class TranspileTestCase(unittest.TestCase):
             circs.append(qasm2.dumps(random_circuit(num_qubits=5, depth=4, measure=True)))
 
         request = {'impl-qasm': circs, 'impl-language': 'Qiskit', 'qpu-name': "ibmq_qasm_simulator", 'input-params': {},
-            'token': os.environ["QISKIT_TOKEN"]}
+                   'token': os.environ["QISKIT_TOKEN"]}
 
         # send the request
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
