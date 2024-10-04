@@ -21,15 +21,14 @@ import base64
 import json
 
 from flask import jsonify, abort, request
-from qiskit import transpile
-from qiskit.providers.ibmq import IBMQAccountError
+from qiskit.compiler import transpile
 from qiskit.transpiler.exceptions import TranspilerError
+from qiskit import qasm2
 
 from app import app, benchmarking, aws_handler, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, \
     analysis, ionq_handler
 from app.benchmark_model import Benchmark
 from app.generated_circuit_model import Generated_Circuit
-from app.qpu_metrics import generate_deterministic_uuid, get_all_qpus_and_metrics_as_json_str
 from app.result_model import Result
 
 
@@ -233,7 +232,7 @@ def transpile_circuit():
                     'number-of-single-qubit-gates': number_of_single_qubit_gates,
                     'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
                     'number-of-measurement-operations': number_of_measurement_operations,
-                    'transpiled-qasm': transpiled_circuit.qasm()}), 200
+                    'transpiled-qasm': qasm2.dumps(transpiled_circuit)}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/analyze-original-circuit', methods=['POST'])
@@ -547,24 +546,6 @@ def get_providers():
          "offeringURL": "https://quantum-computing.ibm.com/", },
         {"id": str(generate_deterministic_uuid("aws", "provider")), "name": "aws",
          "offeringURL": "https://aws.amazon.com/braket/", }]}}), 200
-
-
-@app.route('/qiskit-service/api/v1.0/providers/<provider_id>/qpus', methods=['GET'])
-def get_qpus_and_metrics_of_provider(provider_id: str):
-    """Return qpus and metrics of the specified provider."""
-
-    if 'token' not in request.headers:
-        return jsonify({"message": "Error: token missing in request"}), 401
-
-    token = request.headers.get('token')
-
-    if provider_id == str(generate_deterministic_uuid("ibmq", "provider")):
-        try:
-            return get_all_qpus_and_metrics_as_json_str(token), 200
-        except IBMQAccountError:
-            return jsonify({"message": "the provided token is wrong"}), 401
-    else:
-        return jsonify({"message": "Error: unknown provider ID."}), 400
 
 
 @app.route('/qiskit-service/api/v1.0/analysis', methods=['GET'])

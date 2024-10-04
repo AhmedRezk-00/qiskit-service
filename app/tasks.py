@@ -20,9 +20,10 @@ import base64
 import datetime
 import json
 
-from qiskit import transpile, QuantumCircuit, Aer
+from qiskit import transpile, QuantumCircuit, qasm2
+from qiskit_aer.backends import aer_simulator
 from qiskit.transpiler.exceptions import TranspilerError
-from qiskit.utils.measurement_error_mitigation import get_measured_qubits
+# from qiskit.utils.measurement_error_mitigation import get_measured_qubits
 from qiskit_aer.noise import NoiseModel
 from rq import get_current_job
 
@@ -51,7 +52,7 @@ def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
     if generated_circuit_code:
         non_transpiled_depth_old = 0
         generated_circuit_object = Generated_Circuit.query.get(job.get_id())
-        generated_circuit_object.generated_circuit = generated_circuit_code.qasm()
+        generated_circuit_object.generated_circuit = qasm2.dumps(generated_circuit_code)
 
         non_transpiled_depth = generated_circuit_code.depth()
         while non_transpiled_depth_old < non_transpiled_depth:
@@ -134,7 +135,7 @@ def execute(correlation_id, provider, impl_url, impl_data, impl_language, transp
                 result.result = json.dumps({'error': 'too many qubits required'})
                 result.complete = True
                 db.session.commit()
-            measurement_qubits = get_measurement_qubits_from_transpiled_circuit(transpiled_circuits)
+            # measurement_qubits = get_measurement_qubits_from_transpiled_circuit(transpiled_circuits)
 
             if only_measurement_errors:
                 ro_noise_model = NoiseModel()
@@ -142,7 +143,7 @@ def execute(correlation_id, provider, impl_url, impl_data, impl_language, transp
                     ro_noise_model.add_readout_error(v, k)
                 noise_model = ro_noise_model
 
-            backend = Aer.get_backend('aer_simulator')
+            backend = aer_simulator
 
         else:
             try:
@@ -195,11 +196,11 @@ def execute(correlation_id, provider, impl_url, impl_data, impl_language, transp
         db.session.commit()
 
 
-def get_measurement_qubits_from_transpiled_circuit(transpiled_circuit):
-    qubit_index, qubit_mappings = get_measured_qubits([transpiled_circuit])
-    measurement_qubits = [int(i) for i in list(qubit_mappings.keys())[0].split("_")]
-
-    return measurement_qubits
+# def get_measurement_qubits_from_transpiled_circuit(transpiled_circuit):
+#     qubit_index, qubit_mappings = get_measured_qubits([transpiled_circuit])
+#     measurement_qubits = [int(i) for i in list(qubit_mappings.keys())[0].split("_")]
+#
+#     return measurement_qubits
 
 
 def convert_into_suitable_format(object):

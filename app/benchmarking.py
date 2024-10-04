@@ -21,9 +21,9 @@ import json
 import random
 import numpy as np
 # import qiskit.ignis.verification.randomized_benchmarking as rb
-from qiskit import IBMQ
+# from qiskit import IBMQ
 
-from qiskit import transpile
+from qiskit import transpile, qasm2
 from qiskit.circuit.random import random_circuit
 from qiskit.converters import circuit_to_dag
 from qiskit.transpiler.passes import RemoveFinalMeasurements
@@ -37,22 +37,17 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
         original_number_of_multi_qubit_gates, transpiled_depth, transpiled_width,
         transpiled_number_of_multi_qubit_gates, clifford):
     """Enqueue jobs for randomized circuits for the execution and create database entries"""
-    qasm = circuit.qasm()
+    qasm = qasm2.dumps(circuit)
     job = app.execute_queue.enqueue('app.tasks.execute_benchmark', transpiled_qasm=qasm, qpu_name=backend, token=token,
                                     shots=shots)
     # save benchmark properties to db
     result = Result(id=job.get_id(), backend=backend, shots=shots)
-    benchmark = Benchmark(id=job.get_id(),
-                          backend=backend,
-                          shots=shots,
-                          original_depth=original_depth,
+    benchmark = Benchmark(id=job.get_id(), backend=backend, shots=shots, original_depth=original_depth,
                           original_width=original_width,
                           original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
-                          transpiled_depth=transpiled_depth,
-                          transpiled_width=transpiled_width,
+                          transpiled_depth=transpiled_depth, transpiled_width=transpiled_width,
                           transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates,
-                          clifford=clifford,
-                          benchmark_id=benchmark_id)
+                          clifford=clifford, benchmark_id=benchmark_id)
     db.session.add(result)
     db.session.add(benchmark)
     db.session.commit()
@@ -69,8 +64,8 @@ def calc_wd(qpu_name):
     max_width = 1
     # Searching for max width and depth of all clifford circuits in your database
     for i in range(0, len(benchmarks)):
-        if benchmarks[i].complete and benchmarks[i].result != "" and benchmarks[i].backend == qpu_name\
-                and benchmarks[i].clifford:
+        if benchmarks[i].complete and benchmarks[i].result != "" and benchmarks[i].backend == qpu_name and benchmarks[
+            i].clifford:
             if benchmarks[i].transpiled_depth > max_depth:
                 max_depth = benchmarks[i].transpiled_depth
             if benchmarks[i].transpiled_width > max_width:
@@ -87,14 +82,14 @@ def calc_wd(qpu_name):
 
     # adaptable threshold values (values are work in progress)
     min_histogram_intersection = 0.75  # min histogram intersection value for a benchmark being considered successful
-    class_success_threshold = 2/3   # percentage of benchmarks that have to be successful for the wd-class to be
-                                    # successful
+    class_success_threshold = 2 / 3  # percentage of benchmarks that have to be successful for the wd-class to be
+    # successful
 
     max_class_depth = int(np.floor(max_expected_depth / 5))
 
     for i in range(0, len(benchmarks)):
-        if benchmarks[i].complete and benchmarks[i].result != "" and benchmarks[i].backend == qpu_name\
-                and benchmarks[i].clifford:
+        if benchmarks[i].complete and benchmarks[i].result != "" and benchmarks[i].backend == qpu_name and benchmarks[
+            i].clifford:
             counts = json.loads(benchmarks[i].counts)
             depth = benchmarks[i].transpiled_depth
             # calculating the depth range of the benchmark
@@ -104,18 +99,18 @@ def calc_wd(qpu_name):
             width = benchmarks[i].transpiled_width - 1
             wd_count[depth_range, width] += 1
             first_value = list(counts.values())[0]
-            intersection = first_value/benchmarks[i].shots
+            intersection = first_value / benchmarks[i].shots
             # benchmark is successful if histogram intersection is at least min_histogram_intersection
             if intersection >= min_histogram_intersection:
                 wd_success_count[depth_range, width] += 1
 
-    width_array = np.array(range(max_width))+1
-    depth_array = (np.array(range(max_depth))+1)*5
+    width_array = np.array(range(max_width)) + 1
+    depth_array = (np.array(range(max_depth)) + 1) * 5
     wd_matrix = np.outer(depth_array, width_array)
 
     # set every 0 in wd_count to 1 to avoid dividing by 0
     wd_count[wd_count == 0] = 1
-    prob = wd_success_count/wd_count
+    prob = wd_success_count / wd_count
 
     # wd class is successful if at least 2 out of 3 benchmarks are successful
     successful = prob.copy()
@@ -134,6 +129,7 @@ def calc_wd(qpu_name):
     wd.append({'wd': str(wd2.max())})
 
     return wd
+
 
 # TODO: after Qiskit ignis is deprecated, the generation of Clifford gate circuits has to be adapted
 # def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of_circuit, num_of_circuits, clifford,
@@ -272,9 +268,9 @@ def analyse():
     benchmarks = Benchmark.query.all()
     list = []
     for i in range(0, len(benchmarks), 2):
-        if (benchmarks[i].complete and benchmarks[i + 1].complete) and \
-                (benchmarks[i].benchmark_id == benchmarks[i + 1].benchmark_id) and \
-                (benchmarks[i].result != "" and benchmarks[i + 1].result != ""):
+        if (benchmarks[i].complete and benchmarks[i + 1].complete) and (
+                benchmarks[i].benchmark_id == benchmarks[i + 1].benchmark_id) and (
+                benchmarks[i].result != "" and benchmarks[i + 1].result != ""):
             counts_sim = json.loads(benchmarks[i].counts)
             counts_real = json.loads(benchmarks[i + 1].counts)
             # prb_sim and prb_real will contain the probability distribution of the result
@@ -304,15 +300,10 @@ def analyse():
             intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
             list.append({'benchmark-' + str(benchmarks[i].benchmark_id): {
                 'benchmark-location': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
-                'counts-sim': counts_sim,
-                # "Expected Value Sim": exp_value_sim,
+                'counts-sim': counts_sim,  # "Expected Value Sim": exp_value_sim,
                 # "Standard Deviation Sim": sd_sim,
-                'counts-real': counts_real,
-                # "Expected Value Real": exp_value_real,
+                'counts-real': counts_real,  # "Expected Value Real": exp_value_real,
                 # "Standard Deviation Real": sd_real,
-                'percentage-error': perc_error,
-                'chi-square': chi_square,
-                'correlation': correlation,
-                'histogram-intersection': intersection}
-            })
+                'percentage-error': perc_error, 'chi-square': chi_square, 'correlation': correlation,
+                'histogram-intersection': intersection}})
     return list

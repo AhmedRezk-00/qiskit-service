@@ -17,17 +17,20 @@
 #  limitations under the License.
 # ******************************************************************************
 from qiskit import QiskitError
-from qiskit.providers.jobstatus import JOB_FINAL_STATES
-from qiskit_ionq import IonQProvider
+from qiskit_ibm_runtime.runtime_job import JOB_FINAL_STATES
+
+
+# from qiskit_ionq import IonQProvider
 
 
 def get_qpu(token, qpu_name):
-    provider = IonQProvider(token)
-    if "simulator" not in qpu_name:
-        qpu_name = qpu_name.replace(" ", "-").lower()
-        ionq_signature = "ionq_qpu."
-        qpu_name = ionq_signature + qpu_name
-    return provider.get_backend(qpu_name)
+    # provider = IonQProvider(token)
+    # if "simulator" not in qpu_name:
+    #     qpu_name = qpu_name.replace(" ", "-").lower()
+    #     ionq_signature = "ionq_qpu."
+    #     qpu_name = ionq_signature + qpu_name
+    # return provider.get_backend(qpu_name)
+    return None
 
 
 def execute_job(transpiled_circuit, shots, backend):

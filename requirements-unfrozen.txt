@@ -13,3 +13,5 @@ gunicorn
 marshmallow
 flask-smorest
 tweedledum
+qiskit_aer
+qiskit_ibm_runtime

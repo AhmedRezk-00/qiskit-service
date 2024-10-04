@@ -50,6 +50,8 @@ def prepare_code_from_data(data, input_params):
 
         reload(downloaded_code)
         if 'get_circuit' in dir(downloaded_code):
+            app.logger.info("Downloaded circuit: {}".format(downloaded_code))
+            app.logger.info("input params: {}".format(input_params))
             circuit = downloaded_code.get_circuit(**input_params)
         elif 'qc' in dir(downloaded_code):
             circuit = downloaded_code.qc

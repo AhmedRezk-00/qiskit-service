@@ -16,23 +16,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
-from qiskit_braket_provider import AWSBraketProvider
-from braket.aws.aws_session import AwsSession
-import boto3
-from qiskit.providers.jobstatus import JOB_FINAL_STATES
+# from qiskit_braket_provider import AWSBraketProvider
+# from braket.aws.aws_session import AwsSession
+# import boto3
+from qiskit_ibm_runtime.runtime_job import JOB_FINAL_STATES
 from qiskit import QiskitError
 
 
 def get_qpu(access_key, secret_access_key, qpu_name, region='eu-west-2'):
-    boto_session = boto3.Session(
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_access_key,
-        region_name=region,
-    )
-    session = AwsSession(boto_session)
-    provider = AWSBraketProvider()
-    backend = provider.get_backend(qpu_name, aws_session=session)
-    return backend
+    # boto_session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_access_key,
+    #                              region_name=region, )
+    # session = AwsSession(boto_session)
+    # provider = AWSBraketProvider()
+    # backend = provider.get_backend(qpu_name, aws_session=session)
+    # return backend
+    return None
 
 
 def execute_job(transpiled_circuit, shots, backend):

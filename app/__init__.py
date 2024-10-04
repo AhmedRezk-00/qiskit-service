@@ -32,10 +32,11 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-from app import routes, result_model, benchmark_model, errors, generated_circuit_model
+from app import routes, result_model, benchmark_model, errors, generated_circuit_model, tasks
 from app.controller import register_blueprints
 from flask_smorest import Api
 
+app.app_context().push()
 app.redis = Redis.from_url(app.config['REDIS_URL'], port=5040)
 app.execute_queue = rq.Queue('qiskit-service_execute', connection=app.redis, default_timeout=10000)
 app.implementation_queue = rq.Queue('qiskit-service_implementation_exe', connection=app.redis, default_timeout=10000)
