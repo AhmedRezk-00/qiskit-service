@@ -26,6 +26,7 @@ from importlib import reload
 from urllib import request, error
 
 import qiskit
+from qiskit.qasm3 import loads
 from flask import abort
 
 from app import app
@@ -77,7 +78,7 @@ def prepare_code_from_url(url, input_params, bearer_token: str = "", post_proces
 
 
 def prepare_code_from_qasm(qasm):
-    return qiskit.QuantumCircuit.from_qasm_str(qasm)
+    return loads(qasm)
 
 
 def prepare_code_from_qasm_url(url, bearer_token: str = ""):

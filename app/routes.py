@@ -27,6 +27,8 @@ from qiskit.transpiler.exceptions import TranspilerError
 
 from app import app, benchmarking, aws_handler, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, \
     analysis, ionq_handler
+from app.OpenQASM_annotations import QPU_Selection
+from app.OpenQASM_annotations import Circuit_Provenance
 from app.benchmark_model import Benchmark
 from app.generated_circuit_model import Generated_Circuit
 from app.qpu_metrics import generate_deterministic_uuid, get_all_qpus_and_metrics_as_json_str
@@ -94,12 +96,23 @@ def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
     and return depth and width."""
 
-    if not request.json or not 'qpu-name' in request.json:
+    if not request.json:
         abort(400)
 
     # Default value is ibmq for services that do not support multiple providers and expect the IBMQ provider
     provider = request.json.get('provider', 'ibmq')
-    qpu_name = request.json['qpu-name']
+    qpu_name = request.json.get('qpu-name')
+ ######### If no QPU specified, check for annotation #########
+    if not qpu_name and 'qasm-string' in request.json:
+        qpu_selector = QPU_Selection()
+        selected_qpu = qpu_selector.check_qpu_annotations(request.json.get('qasm-string'))
+        if selected_qpu:
+            qpu_name = selected_qpu
+            app.logger.info(f"Selected QPU from annotation: {qpu_name}")
+    if not qpu_name:
+        abort(400)
+
+
     impl_language = request.json.get('impl-language', '')
     input_params = request.json.get('input-params', "")
     impl_url = request.json.get('impl-url', "")
@@ -210,7 +223,8 @@ def transpile_circuit():
         number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(transpiled_circuit)
         number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates - number_of_measurement_operations
         multi_qubit_gate_depth, transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(transpiled_circuit)
-
+        annotation_OpenQASM3 = Circuit_Provenance(qpu_name,transpiled_circuit)#Annotation for OpenQASM3
+        provenance_result= annotation_OpenQASM3.check_annotations(request.json.get('qasm-string'))#Annotation for OpenQASM3
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
         return jsonify({'error': 'too many qubits required'}), 200
@@ -233,6 +247,7 @@ def transpile_circuit():
                     'number-of-single-qubit-gates': number_of_single_qubit_gates,
                     'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
                     'number-of-measurement-operations': number_of_measurement_operations,
+                    'annotation_result': provenance_result,#annotation result for OpenQASM3
                     'transpiled-qasm': transpiled_circuit.qasm()}), 200
 
 

@@ -17,7 +17,7 @@
 #  limitations under the License.
 # ******************************************************************************
 from time import sleep
-
+from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit import QiskitError, QuantumRegister, execute, Aer
 from qiskit.compiler import assemble
 from qiskit.providers.exceptions import JobError, JobTimeoutError
@@ -30,14 +30,23 @@ def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', h
             project='main'):
     """Load account from token. Get backend."""
     try:
-        IBMQ.disable_account()
+        service = QiskitRuntimeService(channel = "ibm_quantum", token = token)
     except:
-        pass
-    provider = IBMQ.enable_account(token=token, url=url, hub=hub, group=group, project=project)
+    
+        try:
+            IBMQ.disable_account()
+        except:
+            pass
+        provider = IBMQ.enable_account(token=token, url=url, hub=hub, group=group, project=project)
+        if 'simulator' in qpu_name:
+            backend = Aer.get_backend('aer_simulator')
+        else:
+            backend = provider.get_backend(qpu_name)
+        return backend
     if 'simulator' in qpu_name:
         backend = Aer.get_backend('aer_simulator')
     else:
-        backend = provider.get_backend(qpu_name)
+        backend = service.get_backend(qpu_name)
     return backend
 
 
