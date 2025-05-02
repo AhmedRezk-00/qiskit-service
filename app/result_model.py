@@ -28,6 +28,6 @@ class Result(db.Model):
     generated_circuit_id = db.Column(db.String(36), db.ForeignKey('generated__circuit.id'), nullable=True)
     post_processing_result = db.Column(db.String(1200), default="")
     complete = db.Column(db.Boolean, default=False)
-
+    #annotated_qasm = db.Column(db.String(1200), default="")  
     def __repr__(self):
         return 'Result {}'.format(self.result)

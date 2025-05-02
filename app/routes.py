@@ -29,6 +29,7 @@ from app import app, benchmarking, aws_handler, ibmq_handler, implementation_han
     analysis, ionq_handler
 from app.OpenQASM_annotations import QPU_Selection
 from app.OpenQASM_annotations import Circuit_Provenance
+from app.OpenQASM_annotations import Execution_Annotation
 from app.benchmark_model import Benchmark
 from app.generated_circuit_model import Generated_Circuit
 from app.qpu_metrics import generate_deterministic_uuid, get_all_qpus_and_metrics_as_json_str
@@ -401,6 +402,8 @@ def execute_circuit():
                                     qasm_string=qasm_string, **credentials)
 
     result = Result(id=job.get_id(), backend=qpu_name, shots=shots)
+    #qasm_string = request.json.get('qasm-string')
+    #result.annotated_qasm = qasm_string
     db.session.add(result)
     db.session.commit()
 
@@ -475,6 +478,9 @@ def get_result(result_id):
     result = Result.query.get(result_id)
     if result.complete:
         result_dict = json.loads(result.result)
+        execution_annotator = Execution_Annotation()
+        annotation_results = execution_annotator.check_execution_annotations(result.annotated_qasm, result_dict['counts'])
+        result_dict['execution_annotation'] = annotation_results
         if result.post_processing_result:
             post_processing_result_dict = json.loads(result.post_processing_result)
             return jsonify(
